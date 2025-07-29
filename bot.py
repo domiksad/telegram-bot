@@ -1,11 +1,12 @@
 import logging
+from dotenv import dotenv_values # for token
 from functools import wraps # admin validation
 from collections import deque # chat history
 from telegram import Update, ChatMemberAdministrator, ChatMemberMember, error
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes
 from profanityfilter import ProfanityFilter
 
-TOKEN = "8417513383:AAElyd9LxoRKSutZcuKrKe9HHwygHT2-qhk" # do not share
+TOKEN = dotenv_values(".env")["TOKEN"]
 
 # profanity filter settings
 use_profanity_filter = True
@@ -54,13 +55,13 @@ async def handle_new_message(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if(pf.is_profane(text) & notify_about_profanity):
         await context.bot.send_message(chat_id=update.effective_chat.id, text=profanity_notification_text, reply_to_message_id=message_id)
 
-async def profanity_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = update.message or update.edited_message
-    if not message or not message.text:
-        return
-    text = message.text
-    if(pf.is_profane(text) & notify_about_profanity):
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=profanity_notification_text, reply_to_message_id=update.message.message_id)
+# async def profanity_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     message = update.message or update.edited_message
+#     if not message or not message.text:
+#         return
+#     text = message.text
+#     if(pf.is_profane(text) & notify_about_profanity):
+#         await context.bot.send_message(chat_id=update.effective_chat.id, text=profanity_notification_text, reply_to_message_id=update.message.message_id)
 
 def require_permission(user_permission, bot_permission=None):
     def decorator(func):
@@ -183,6 +184,12 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # admin commands stop
 
+# debug commands start
+async def show_message_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("working")
+    await update.message.reply_text("history: \n" + message_cache)
+# debug commands stop
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
     
@@ -198,6 +205,9 @@ if __name__ == '__main__':
     purge_handler             = CommandHandler('purge', purge);                         application.add_handler(purge_handler)
 
     # censorship
-    profanityFilter_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), profanity_filter); application.add_handler(profanityFilter_handler)
+    messages_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), handle_new_message); application.add_handler(messages_handler)
+
+    # debug
+    show_message_history_handler = CommandHandler('show_message_history', show_message_history); application.add_handler(show_message_history_handler)
 
     application.run_polling()
