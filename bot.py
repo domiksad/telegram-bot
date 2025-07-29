@@ -34,7 +34,7 @@ logging.basicConfig(
 message_cache = deque(maxlen=DEQUE_MAX_LEN) # {"id": ..., "user_id": ...}
 
 def add_message(id, user_id):
-    message_cache.append({id, user_id})
+    message_cache.append({"id": id, "user_id": user_id})
 
 # chat history stop
 
@@ -185,9 +185,11 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # admin commands stop
 
 # debug commands start
+
 async def show_message_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print("working")
-    await update.message.reply_text("history: \n" + message_cache)
+    text_lines = [f"Message_id: {i['id']} User_id: {i['user_id']}" for i in message_cache]
+    await update.message.reply_text("history:\n" +  "\n".join(text_lines))
+
 # debug commands stop
 
 if __name__ == '__main__':
@@ -204,10 +206,12 @@ if __name__ == '__main__':
     mute_handler              = CommandHandler('mute', mute);                           application.add_handler(mute_handler)
     purge_handler             = CommandHandler('purge', purge);                         application.add_handler(purge_handler)
 
+    # debug
+    show_message_history_handler = CommandHandler('show_message_history', show_message_history); application.add_handler(show_message_history_handler)
+
     # censorship
     messages_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), handle_new_message); application.add_handler(messages_handler)
 
-    # debug
-    show_message_history_handler = CommandHandler('show_message_history', show_message_history); application.add_handler(show_message_history_handler)
+    
 
     application.run_polling()
