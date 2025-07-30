@@ -30,68 +30,14 @@ logging.basicConfig(
 )
 
 # some shit - internal logic
-# chat history start
-message_cache = deque(maxlen=DEQUE_MAX_LEN) # {"chat_id": ..., "message_id": ..., "user_id": ...}
 
-def add_message(chat_id, message_id, user_id):
-    message_cache.append({"chat_id": chat_id, "message_id": message_id, "user_id": user_id})
-
-async def send_and_cache(bot, *args, **kwargs):
-    msg = await bot.send_message(*args, **kwargs)
-    add_message(msg.chat.id, msg.message_id, msg.from_user.id)
-    return msg
-
-async def reply_and_cache(message_obj, *args, **kwargs):
-    msg = await message_obj.reply_text(*args, **kwargs)
-    add_message(msg.chat.id, msg.message_id, msg.from_user.id)
-    return msg
-
-async def delete_message(bot, chat_id, message_id):
-    await bot.delete_message(chat_id=chat_id, message_id=message_id)
-
-    for i, msg in enumerate(message_cache):
-        if msg["message_id"] == message_id:
-            del message_cache[i]
-            break
-
-def find_message(message_id):
-    for i in message_cache:
-        if i["message_id"] == message_id:
-            return True
-    return False
-
-def save_message_to_cache(func):
-    @wraps(func)
-    async def wrapper(update, context, *args, **kwargs):
-        if update.message: # if its new message
-            message_id = update.message.id
-            add_message(update.effective_chat, message_id, update.message.from_user.id) # then add it to deque
-        elif update.edited_message: # if its edited message
-            message_id = update.edited_message.id
-            if not find_message(update.edited_message.id): # check if it is in stack
-                add_message(update.effective_chat, update.edited_message.id, update.edited_message.from_user.id) # if not then add it
-
-        if not use_profanity_filter:
-            return await func(update, context, *args, **kwargs)
-        
-        message = update.message or update.edited_message
-        text = message.text
-        print(text)
-        if(pf.is_profane(text) & notify_about_profanity):
-            await send_and_cache(context.bot, chat_id=update.effective_chat.id, text=profanity_notification_text, reply_to_message_id=message_id)
-
-        return await func(update, context, *args, **kwargs)
-    return wrapper
-
-# chat history stop
-
-# async def profanity_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     message = update.message or update.edited_message
-#     if not message or not message.text:
-#         return
-#     text = message.text
-#     if(pf.is_profane(text) & notify_about_profanity):
-#         await context.bot.send_message(chat_id=update.effective_chat.id, text=profanity_notification_text, reply_to_message_id=update.message.message_id)
+async def profanity_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.message or update.edited_message
+    if not message or not message.text:
+        return
+    text = message.text
+    if(pf.is_profane(text) & notify_about_profanity):
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=profanity_notification_text, reply_to_message_id=update.message.message_id)
 
 def require_permission(user_permission, bot_permission=None):
     def decorator(func):
@@ -107,10 +53,10 @@ def require_permission(user_permission, bot_permission=None):
                 if getattr(user_member, user_permission, False):
                     return await func(update, context, *args, **kwargs)
                 else:
-                    await reply_and_cache(update.message, f'You need "{user_permission.replace('_', ' ')}" permission to use this command')
+                    await update.message.reply_text(f'You need "{user_permission.replace('_', ' ')}" permission to use this command')
                     return
             else:
-                await reply_and_cache(update.message, "You must be an admin to use this command")
+                await update.message.reply_text("You must be an admin to use this command")
                 return
             
             if not bot_permission:
@@ -120,10 +66,10 @@ def require_permission(user_permission, bot_permission=None):
             bot_member = await context.bot.get_chat_member(chat_id, bot_id)
             if isinstance(bot_member, ChatMemberAdministrator):
                 if bot_permission and not getattr(bot_member, bot_permission):
-                    await reply_and_cache(update.message, f'I need "{user_permission.replace('_', ' ')}" permission to perform this action')
+                    await update.message.reply_text(f'I need "{user_permission.replace('_', ' ')}" permission to perform this action')
                     return
             else:
-                await reply_and_cache(update.message, "I am not an admin in this group")
+                await update.message.reply_text("I am not an admin in this group")
 
             return await func(update, context, *args, **kwargs)
         return wrapper
@@ -140,22 +86,17 @@ def require_admin(func):
         if member.status in ["administrator", "creator"]:
             return await func(update, context, *args, **kwargs)
         else:
-            await reply_and_cache(update.message, "Only admins can use this command")
+            await update.message.reply_text("Only admins can use this command")
     return wrapper
 
-@save_message_to_cache
-async def dummy_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return
 # end of internal logic
 
 # commands
-@save_message_to_cache
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE): 
-    return await send_and_cache(context.bot, chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+    return await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
 # admin commands start
 
-@save_message_to_cache
 @require_admin
 async def check_permissions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
@@ -163,75 +104,58 @@ async def check_permissions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_member = await context.bot.get_chat_member(chat.id, bot_id)
 
     if(isinstance(bot_member, ChatMemberAdministrator)):
-        return await reply_and_cache(update.message, f'The bot has the following permissions:\nCan delete messages: {bot_member.can_delete_messages}\nCan pin messages: {bot_member.can_pin_messages}\nCan restrict members: {bot_member.can_restrict_members}')
+        return await update.message.reply_text(f'The bot has the following permissions:\nCan delete messages: {bot_member.can_delete_messages}\nCan pin messages: {bot_member.can_pin_messages}\nCan restrict members: {bot_member.can_restrict_members}')
     elif isinstance(bot_member, ChatMemberMember):
-        return await reply_and_cache(update.message, "The bot is regular member and cannot help with moderation")
+        return await update.message.reply_text("The bot is regular member and cannot help with moderation")
     else:
-        return await reply_and_cache(update.message, f"Bot status: {bot_member.status}")
+        return await update.message.reply_text(f"Bot status: {bot_member.status}")
 
-@save_message_to_cache
-@require_permission("can_delete_messages", "can_delete_messages")
-async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message.reply_to_message:
-        return await reply_and_cache(update.message, "Reply to a message to start purging from.")
-    
-    try:
-        amount = int(context.args[0])
-    except (IndexError, ValueError):
-        return await reply_and_cache(update.message, "Usage: /purge <number_of_messages>")
-    
-    chat_id = update.effective_chat.id
-    start_msg_id = update.message.reply_to_message.id
-    current_id = start_msg_id
-    deleted = 0
-    max_failures = 10
-    failures = 0
-
-    while deleted < amount and current_id > 0 and current_id != start_msg_id:
-        try:
-            await delete_message(context.bot, chat_id=chat_id, message_id=current_id)
-            deleted += 1
-            failures = 0 
-        except error.BadRequest as e:
-            if "message to delete not found" in str(e).lower():
-                failures += 1
-                if failures >= max_failures:
-                    break
-            else:
-                raise
-        current_id += 1
-    return await reply_and_cache(update.message, f"Deleted {deleted} messages")
-
-@save_message_to_cache
 @require_permission("can_restrict_members", "can_restrict_members")
 async def kick(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await reply_and_cache(update.message, f"Can kick people")
+    if not update.message and update.edited_message:
+        return
 
-@save_message_to_cache
+    if update.message.reply_to_message: # is it reply to someone message
+        target_user = update.message.reply_to_message.from_user # if so than get his id
+    elif len(context.args) == 1:
+        try:
+            user_id = int(context.args[0])
+            target_user = await context.bot.get_chat_member(update.effective_chat, user_id)
+            target_user = target_user.user
+        except ValueError:
+            if update.message.entities[1]:
+                entity = update.message.entities[1]
+                if entity.type == "text_mention":
+                    target_user = entity.user
+                elif entity.type == "mention":
+                    username = update.message.text[entity.offset : entity.offset + entity.length]
+                    username = username.lstrip("@")
+                    try:
+                        target_user = await context.bot.get_chat(username)
+                    except:
+                        return await update.message.reply_text("User not found")
+            else:
+                return await update.message.reply_text("Incorrect user id")
+    else:
+        return await update.message.reply_text("Usage: /kick <by reply|username|id|mention>")
+
+    await update.message.reply_text(f"Kicked {target_user.name}")
+
 @require_permission("can_restrict_members", "can_restrict_members")
 async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await reply_and_cache(update.message, f"Can ban people")
+    await update.message.reply_text(f"Can ban people")
 
-@save_message_to_cache
+
 @require_permission("can_restrict_members", "can_restrict_members")
 async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await reply_and_cache(update.message, f"Can warn people")
+    await update.message.reply_text(f"Can warn people")
 
-@save_message_to_cache
+
 @require_permission("can_restrict_members", "can_restrict_members")
 async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await reply_and_cache(update.message, f"Can mute people")
+    await update.message.reply_text(f"Can mute people")
 
 # admin commands stop
-
-# debug commands start
-
-@save_message_to_cache
-async def show_message_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text_lines = [f"Message_id: {i['message_id']} User_id: {i['user_id']}" for i in message_cache]
-    await reply_and_cache(update.message, "history:\n" +  "\n".join(text_lines))
-
-# debug commands stop
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
@@ -245,14 +169,8 @@ if __name__ == '__main__':
     ban_handler               = CommandHandler('ban', ban);                             application.add_handler(ban_handler)
     warn_handler              = CommandHandler('warn', warn);                           application.add_handler(warn_handler)
     mute_handler              = CommandHandler('mute', mute);                           application.add_handler(mute_handler)
-    purge_handler             = CommandHandler('purge', purge);                         application.add_handler(purge_handler)
-
-    # debug
-    show_message_history_handler = CommandHandler('show_message_history', show_message_history); application.add_handler(show_message_history_handler)
 
     # censorship
-    messages_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), dummy_function); application.add_handler(messages_handler) # its decorator now
-
-    
+    messages_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), profanity_filter); application.add_handler(messages_handler) # its decorator now
 
     application.run_polling()
