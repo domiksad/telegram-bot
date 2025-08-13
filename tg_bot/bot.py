@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta, timezone
 from dotenv import dotenv_values # for token
 from functools import wraps # admin validation
 from collections import deque # chat history
@@ -13,6 +14,9 @@ use_profanity_filter = True
 pf = ProfanityFilter()
 notify_about_profanity = True; profanity_notification_text = "You said profane thing. Stop it"
 
+# moderation actions settings 
+DEFAULT_MUTE_DURATION = lambda: datetime.now(timezone.utc) + timedelta(days=3)
+
 # permissions
 # has_permissions = [] # chat_id: [perms...]
 # permissionSuccessfulNotif = "I have all perms needed"
@@ -22,7 +26,7 @@ notify_about_profanity = True; profanity_notification_text = "You said profane t
 rules_text = "1. Do not swear\n2. No erp you kinky piece of shit"
 
 # internal logic settings
-DEQUE_MAX_LEN = 1_000
+# DEQUE_MAX_LEN = 1_000
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -30,6 +34,22 @@ logging.basicConfig(
 )
 
 # some shit - internal logic
+
+# { (chat_id: int, user_id: int): {"previous_permissions": ChatPermissions, "until": datetime} }
+mutted_members = {}
+
+def add_muted_member(chat_id: int, user_id: int, previous_permissions: ChatPermissions, until: datetime):
+    mutted_members[(chat_id, user_id)] = {"previous_permissions": previous_permissions, "until": until}
+
+def remove_muted_member(chat_id: int, user_id: int):
+    previous_permissions = mutted_members[(chat_id, user_id)]["previous_permissions"]
+    mutted_members.pop((chat_id, user_id), None)
+    return previous_permissions
+   
+def update_muted_member_array():
+    for key, value in list(mutted_members.items()):
+        if value["until"] < datetime.now(timezone.utc):
+            mutted_members.pop(key)
 
 async def profanity_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message or update.edited_message
@@ -139,45 +159,61 @@ async def check_permissions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         return await update.message.reply_text(f"Bot status: {bot_member.status}")
 
+
+
 @require_permission("can_restrict_members", "can_restrict_members")
 async def moderation_action(update: Update, context: ContextTypes.DEFAULT_TYPE, moderation_action: str):
-    target_user, chat_member_status = get_target_user(update=Update, context=context)
+    result = await get_target_user(update=update, context=context)
+    if result is None:
+        return await update.message.reply_text("No user specified or user not found")
+    target_user, chat_member_status = result
 
     if chat_member_status == "administrator": 
-        return await update.message.reply_text(f"You can't kick other admins")
-    if chat_member_status == "creator":
-        return await update.message.reply_text(f"You can't kick owner")
+        return await update.message.reply_text(f"You can't {moderation_action} other admins")
+    elif chat_member_status == "creator":
+        return await update.message.reply_text(f"You can't {moderation_action} owner")
 
-    try:            
-        if moderation_action == "kick":
-            await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
-            await context.bot.unban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
-            action_text = "kicked"
-        elif moderation_action == "ban":
-            await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
-            action_text = "banned"
-        elif moderation_action == "mute":
-            await context.bot.restrict_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id,
-                permissions=ChatPermissions(
-                    can_send_messages=False,
-                    can_send_media_messages=False,
-                    can_send_polls=False,
-                    can_send_other_messages=False,
-                    can_add_web_page_previews=False,
-                    can_change_info=False,
-                    can_invite_users=False,
-                    can_pin_messages=False
-                ))
-            action_text = "mutted"
-        elif moderation_action == "warn":
-            action_text = "warned"
-            pass
-        elif moderation_action == "unban":
-            await context.bot.unban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
-            action_text = "unbanned"
-        else:
-            raise Exception(f"Wrong moderation_action {moderation_action}")
-        
+    try:
+        match moderation_action:
+            case "kick":
+                await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
+                await context.bot.unban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
+                action_text = "kicked"
+            case "ban":
+                await context.bot.ban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
+                action_text = "banned"
+            case "unban":
+                await context.bot.unban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
+                action_text = "unbanned"
+            case "mute":
+                mute_time = datetime.now(timezone.utc) + timedelta(minutes=1)
+                # complicated logic
+                if hasattr(target_user, "permissions") and target_user.permissions:
+                    perms = target_user.permissions
+                else:
+                    perms = (await context.bot.get_chat(update.effective_chat.id)).permissions
+                
+                await context.bot.restrict_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id,
+                    permissions=ChatPermissions(
+                        can_send_messages=False,
+                        can_send_other_messages=False,
+                        can_add_web_page_previews=False,
+                        can_change_info=False,
+                        can_invite_users=False,
+                        can_pin_messages=False
+                    ), until_date=mute_time or DEFAULT_MUTE_DURATION)
+                add_muted_member(chat_id=update.effective_chat.id, user_id=target_user.id, previous_permissions=perms, until=mute_time or DEFAULT_MUTE_DURATION)
+                action_text = "muted"
+            case "unmute":
+                perms = remove_muted_member(chat_id=update.effective_chat.id, user_id=target_user.id) or (await context.bot.get_chat(update.effective_chat.id)).permissions
+                await context.bot.restrict_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id, permissions=perms)
+                action_text = "unmuted"
+            case "warn":
+                action_text = "warned"
+                pass
+            case _:
+                raise Exception(f"Wrong moderation_action {moderation_action}")
+            
         await update.message.reply_text(f"User {target_user.name} was {action_text} by @{update.message.from_user.name}")
     except error.BadRequest as e:
         await update.message.reply_text(e.message)
@@ -191,12 +227,13 @@ if __name__ == '__main__':
     start_handler = CommandHandler('start', start); application.add_handler(start_handler)
 
     # admin commands
-    check_permissions_handler = CommandHandler('check_permissions', check_permissions);                   application.add_handler(check_permissions_handler)
-    kick_handler              = CommandHandler('kick', lambda u, c: moderation_action(u, c, "kick"));     application.add_handler(kick_handler)
-    ban_handler               = CommandHandler('ban', lambda u, c: moderation_action(u, c, "ban"));       application.add_handler(ban_handler)
-    warn_handler              = CommandHandler('warn', lambda u, c: moderation_action(u, c, "warn"));     application.add_handler(warn_handler)
-    mute_handler              = CommandHandler('mute', lambda u, c: moderation_action(u, c, "mute"));     application.add_handler(mute_handler)
-    unban_handler             = CommandHandler('unban', lambda u, c: moderation_action(u, c, "unban"));   application.add_handler(unban_handler)
+    check_permissions_handler  = CommandHandler('check_permissions', check_permissions);                                                        application.add_handler(check_permissions_handler)
+    kick_handler               = CommandHandler('kick', lambda u, c: moderation_action(u, c, "kick"), filters=filters.UpdateType.MESSAGE);      application.add_handler(kick_handler)
+    ban_handler                = CommandHandler('ban', lambda u, c: moderation_action(u, c, "ban"), filters=filters.UpdateType.MESSAGE);        application.add_handler(ban_handler)
+    warn_handler               = CommandHandler('warn', lambda u, c: moderation_action(u, c, "warn"), filters=filters.UpdateType.MESSAGE);      application.add_handler(warn_handler)
+    mute_handler               = CommandHandler('mute', lambda u, c: moderation_action(u, c, "mute"), filters=filters.UpdateType.MESSAGE);      application.add_handler(mute_handler)
+    unmute_handler             = CommandHandler('unmute', lambda u, c: moderation_action(u, c, "unmute"), filters=filters.UpdateType.MESSAGE); application.add_handler(unmute_handler)
+    unban_handler              = CommandHandler('unban', lambda u, c: moderation_action(u, c, "unban"), filters=filters.UpdateType.MESSAGE);    application.add_handler(unban_handler)
 
     # censorship
     messages_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), profanity_filter); application.add_handler(messages_handler) # its decorator now
