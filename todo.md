@@ -1,11 +1,20 @@
-+ kick
-+ ban
-+ mute
+#### Done:
+* profanity filter
+* kick
+* ban
+* unban
+* mute
+* unmute
+* warn
 
-- warn
-hello message
-captcha system
-raid protection?
-pin for some time
+#### In work:
+* unwarn
 
-history of banned users
+#### Ideas:
+* hello message
+* captcha system 
+* raid protection?
+* history of banned users
+* funkcja do zwracania tekstu do pingowania 
+* escapeować każdego stringa
+* zapisywać stany
