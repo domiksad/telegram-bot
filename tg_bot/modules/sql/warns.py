@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from tg_bot.modules.sql import con, cur
 
 
@@ -12,7 +10,7 @@ def _record_exists(chat_id: int, user_id: int):
 def check_warn_count(chat_id: int, user_id: int) -> int:
     cur.execute("select current_count from warnings where chat_id = ? and user_id = ?", [chat_id, user_id])
     current_count: int = cur.fetchone()
-    return current_count
+    return current_count[0]
 
 def increment_warn_count(chat_id: int, user_id: int) -> int:
     if not _record_exists(chat_id=chat_id, user_id=user_id):
@@ -21,7 +19,7 @@ def increment_warn_count(chat_id: int, user_id: int) -> int:
         return 1
     
     current_count = check_warn_count(chat_id=chat_id, user_id=user_id)
-    cur.execute(f"update warnings set {current_count+1} where chat_id = ? and user_id = ?", [chat_id, user_id])
+    cur.execute(f"update warnings set current_count = {current_count+1} where chat_id = ? and user_id = ?", [chat_id, user_id])
     con.commit()
     return current_count+1
 
@@ -32,7 +30,7 @@ def decrement_warn_count(chat_id: int, user_id: int) -> int:
     current_count = check_warn_count(chat_id=chat_id, user_id=user_id)
     if current_count == 0:
         return -1
-    cur.execute(f"update warnings set {current_count-1} where chat_id = ? and user_id = ?", [chat_id, user_id])
+    cur.execute(f"update warnings set current_count = {current_count-1} where chat_id = ? and user_id = ?", [chat_id, user_id])
     con.commit()
     return current_count-1
 

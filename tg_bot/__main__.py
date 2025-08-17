@@ -6,11 +6,6 @@ from tg_bot.modules.handlers import register_handlers, register_profanity_filter
 
 application = ApplicationBuilder().token(Config.API_KEY).build()
 
-# Database stuff
-if Config.USE_DATABASE:
-    from tg_bot.modules.database import main
-    main()
-
 # Handlers
 register_handlers(application=application)
 if Config.USE_PROFANITY_FILTER:

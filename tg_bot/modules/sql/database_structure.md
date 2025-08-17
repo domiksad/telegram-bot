@@ -11,3 +11,10 @@ primary key (chat_id, user_id)
 | Int | Int | Int | Timestamp |
 
 primary key (chat_id, message_id)
+
+### rules
+| chat_id | rule_text |
+| :---: | :---: |
+| int | str
+
+primary key (chat_id)

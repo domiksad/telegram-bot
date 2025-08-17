@@ -7,9 +7,10 @@
 * unmute
 * warn
 * unwarn
+* rozbicie moderation action
 
 #### In work:
-* rozbicie moderation action
+* fancy notatnik dla zasad
 
 #### Ideas:
 * hello message
@@ -22,5 +23,4 @@
 * Nie można wybrać bota jako cel moderation action
 * więcej dekoratorów z zabezpieczeniami (np. ^^^)
 * baza danych do zapisu warnów i wiadomości
-* fancy notatnik dla zasad
 * reset api key

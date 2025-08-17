@@ -39,3 +39,5 @@ class Config:
             hours=Config.DEFAULT_MUTE_DURATION_HOURS,
             minutes=Config.DEFAULT_MUTE_DURATION_MINUTES
         )
+    
+    tables_len = 0

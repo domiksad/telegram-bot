@@ -54,7 +54,7 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if Config.RESET_WARN_COUNT_AFTER_UNBANNING:
         reset_warn_count(chat_id=update.effective_chat.id, user_id=target_user.id)
-    await context.bot.unban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id)
+    await context.bot.unban_chat_member(chat_id=update.effective_chat.id, user_id=target_user.id, only_if_banned=True)
     await update.message.reply_text(f"User [{target_user.full_name}](tg://user?id={target_user.id}) was unbanned by [{update.message.from_user.full_name}](tg://user?id={update.message.from_user.id})", parse_mode="MarkdownV2")
 
 @require_permission("can_restrict_members", "can_restrict_members")

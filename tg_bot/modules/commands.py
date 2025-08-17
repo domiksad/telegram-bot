@@ -3,6 +3,7 @@ from telegram.ext import filters
 from tg_bot.modules.moderation_actions import check_user, kick, ban, unban, warn, unwarn, mute, unmute
 from tg_bot.modules.intro import start, help
 from tg_bot.modules.permissions import check_bot_permissions, check_member_permissions
+from tg_bot.modules.rules import add_rule, read_rule 
 
 COMMANDS = {
     "start": start,
@@ -16,7 +17,9 @@ COMMANDS = {
     "unwarn": unwarn,
     "mute": mute,
     "unmute": unmute,
-    "help": help
+    "help": help,
+    "set_rule": add_rule,
+    "rules": read_rule
 }
 
 FILTERS = {
