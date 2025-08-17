@@ -6,9 +6,10 @@
 * mute
 * unmute
 * warn
+* unwarn
 
 #### In work:
-* unwarn
+* rozbicie moderation action
 
 #### Ideas:
 * hello message
@@ -18,3 +19,8 @@
 * funkcja do zwracania tekstu do pingowania 
 * escapeować każdego stringa
 * zapisywać stany
+* Nie można wybrać bota jako cel moderation action
+* więcej dekoratorów z zabezpieczeniami (np. ^^^)
+* baza danych do zapisu warnów i wiadomości
+* fancy notatnik dla zasad
+* reset api key

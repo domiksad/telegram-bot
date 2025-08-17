@@ -24,9 +24,12 @@ class Config:
     BAN_WARN_DURATION_DAYS = 0 # 0 means ban until someone unbans him. MAX 365 days
     RESET_WARN_COUNT_AFTER_UNBANNING = True
 
+    # Database settings
+    USE_DATABASE = True # Changing it may cause errors
+    DATABASE_NAME = "main"
+
     # Other
     RULES_TEXT = "1. Do not swear\n2. No erp you kinky piece of shit"
-
 
     # Computed values
     @staticmethod

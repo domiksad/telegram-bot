@@ -24,4 +24,4 @@ def reset_warn_count(chat_id: int, user_id: int):
     warns_count[(chat_id, user_id)] = 0
 
 def check_warn_count(chat_id: int, user_id: int) -> int:
-    return warns_count[(chat_id, user_id)]
+    return warns_count.get((chat_id, user_id), 0)

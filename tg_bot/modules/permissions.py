@@ -74,31 +74,25 @@ async def check_bot_permissions(update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text(f"Bot status: {bot_member.status}")
         return
 
-
-def chat_member_to_permissions(chat_member: ChatMemberRestricted):
-    return ChatPermissions(
-        can_send_messages=chat_member.can_send_messages,
-        can_send_audios=chat_member.can_send_audios,
-        can_send_documents=chat_member.can_send_documents,
-        can_send_photos=chat_member.can_send_photos,
-        can_send_videos=chat_member.can_send_videos,
-        can_send_video_notes=chat_member.can_send_video_notes,
-        can_send_voice_notes=chat_member.can_send_voice_notes,
-        can_send_polls=chat_member.can_send_polls,
-        can_send_other_messages=chat_member.can_send_other_messages,
-        can_add_web_page_previews=chat_member.can_add_web_page_previews,
-        can_change_info=chat_member.can_change_info,
-        can_invite_users=chat_member.can_invite_users,
-        can_pin_messages=chat_member.can_pin_messages,
-        can_manage_topics=chat_member.can_manage_topics
-    )
-
 @require_admin
 async def check_member_permissions(update: Update, context: ContextTypes.DEFAULT_TYPE): # will only work with replies bc
+    if update.message.reply_to_message.from_user is None:
+        await update.message.reply_text("Usage: /check_user_permissions [by reply]")
+        return
+
     chat_member = await context.bot.get_chat_member(update.effective_chat.id, update.message.reply_to_message.from_user.id)
 
-    if chat_member.status != "restricted":
-        await update.message.reply_text(f"User is {chat_member.status}. He has default permissions")
+    if chat_member.status in ["administrator", "creator"]:
+        await update.message.reply_text(f"User is an {chat_member.status}. He has all permissions")
+        return
+    if chat_member.status == "left":
+        await update.message.reply_text(f"User has left")
+        return
+    if chat_member.status == "kicked":
+        await update.message.reply_text(f"User was banned")
+        return
+    if chat_member.status == "member":
+        await update.message.reply_text(f"User is a member. He has default permissions")
         return
     
     attrs = [
