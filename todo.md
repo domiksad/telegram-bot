@@ -8,19 +8,19 @@
 * warn
 * unwarn
 * rozbicie moderation action
+* fancy notatnik dla zasad
+* hello message
 
 #### In work:
-* fancy notatnik dla zasad
+* Nie można wybrać bota jako cel moderation action
 
 #### Ideas:
-* hello message
 * captcha system 
 * raid protection?
 * history of banned users
 * funkcja do zwracania tekstu do pingowania 
 * escapeować każdego stringa
 * zapisywać stany
-* Nie można wybrać bota jako cel moderation action
 * więcej dekoratorów z zabezpieczeniami (np. ^^^)
 * baza danych do zapisu warnów i wiadomości
 * reset api key

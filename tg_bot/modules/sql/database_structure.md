@@ -15,6 +15,13 @@ primary key (chat_id, message_id)
 ### rules
 | chat_id | rule_text |
 | :---: | :---: |
-| int | str
+| int | str |
+
+primary key (chat_id)
+
+### welcome_messages
+| chat_id | welcome_message_text |
+| :---: | :---: |
+| int | str |
 
 primary key (chat_id)

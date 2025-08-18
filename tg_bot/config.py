@@ -28,9 +28,6 @@ class Config:
     USE_DATABASE = True # Changing it may cause errors
     DATABASE_NAME = "main"
 
-    # Other
-    RULES_TEXT = "1. Do not swear\n2. No erp you kinky piece of shit"
-
     # Computed values
     @staticmethod
     def DEFAULT_MUTE_DURATION():
@@ -40,4 +37,3 @@ class Config:
             minutes=Config.DEFAULT_MUTE_DURATION_MINUTES
         )
     
-    tables_len = 0

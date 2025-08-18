@@ -1,7 +1,7 @@
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler
 
 from tg_bot.config import Config
-from tg_bot.modules.handlers import register_handlers, register_profanity_filter
+from tg_bot.modules.handlers import register_handlers, register_profanity_filter, welcome_message_filter
 
 
 application = ApplicationBuilder().token(Config.API_KEY).build()
@@ -10,5 +10,7 @@ application = ApplicationBuilder().token(Config.API_KEY).build()
 register_handlers(application=application)
 if Config.USE_PROFANITY_FILTER:
     register_profanity_filter(application=application)
+
+welcome_message_filter(application=application)
 
 application.run_polling()
