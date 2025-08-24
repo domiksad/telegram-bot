@@ -26,7 +26,7 @@ class Config:
 
     # Database settings
     USE_DATABASE = True # Changing it may cause errors
-    DATABASE_NAME = "main"
+    DATABASE_NAME = "db/main"
 
     # Computed values
     @staticmethod

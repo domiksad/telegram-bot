@@ -24,3 +24,9 @@
 * więcej dekoratorów z zabezpieczeniami (np. ^^^)
 * baza danych do zapisu warnów i wiadomości
 * reset api key
+
+
+#### Smth Smth
+After muting user, his previous permissions are lost
+User warn count is deleted after kicking
+Rules can be written in markdownV2

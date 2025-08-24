@@ -6,6 +6,7 @@ from tg_bot.config import Config
 
 import os
 
+# Setting logger
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO

@@ -1,0 +1,12 @@
+services:
+  bot:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./db:/app/db
+    develop:
+      watch:
+        - action: rebuild
+          path: ./tg_bot
+          target: /app
