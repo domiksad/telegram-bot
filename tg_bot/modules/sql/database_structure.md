@@ -5,23 +5,8 @@
 
 primary key (chat_id, user_id)
 
-### messages
-| chat_id | message_id | user_id | sent_at |
-| :---: | :---: | :---: | :---: |
-| Int | Int | Int | Timestamp |
-
-primary key (chat_id, message_id)
-
-### rules
-| chat_id | rule_text |
+### channel_settings
+| chat_id | language |
 | :---: | :---: |
-| int | str |
-
-primary key (chat_id)
-
-### welcome_messages
-| chat_id | welcome_message_text |
-| :---: | :---: |
-| int | str |
-
-primary key (chat_id)
+| Int | Text |
+| NONE | DEFAULT_LANGUAGE |

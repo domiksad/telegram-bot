@@ -77,6 +77,9 @@ pip install -r requirements.txt
 python -m tg_bot
 ```
 
+## Database structure
+[Database structure](tg_bot/modules/sql/database_structure.md)
+
 ## Contributing
 
 1. Fork the repository

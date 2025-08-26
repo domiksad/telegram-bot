@@ -1,0 +1,23 @@
+db/ # Przechowuje bazę danych
+    main.db # Baza danych
+
+tg_bot/
+    __init__.py # Uruchamia się jako pierwsze. Sprawdza wersje i ładuje logger
+    __main__.py # Wczytuje api_key, uruchamia aplikacje i uruchamia rejestrowanie komend
+    config.py # Przechowuje zmienne których nie chce hardcodować (np. nazwa bazy danych i jej ścieżka)
+    language.py # Wszystkie powiadomienia które bot wyśle znajdują się tutaj
+
+    modules/ # Tutaj są wszystkie moduły
+        commands/ # Skrypty do rejestrowania komend
+            commands.py # Spis wszystkich komend
+            handlers.py # Rejestruje komendy i inne handlery
+        helper_funcs/ # Funkcje pomocnicze używane w całym projekcie
+            chat_status.py # Funkcje i dekoracje do sprawdzania permisji bota/nadawcy
+        moderation_actions/ # Komendy do zarządzania użytkownikami czatu
+            ban.py # ban() i unban()
+            kick.py # kick()
+            mute.py # mute() i unmute()
+            warn.py # warn() i unwarn()
+        sql/ # Skrypty do zapisu i odczytu w bazie danych
+            __init__.py # Tworzy baze danych jeśli nie istnieje
+        

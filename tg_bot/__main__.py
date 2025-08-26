@@ -1,16 +1,24 @@
-from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler
+from telegram.ext import ApplicationBuilder
 
-from tg_bot.config import Config
-from tg_bot.modules.handlers import register_handlers, register_profanity_filter, welcome_message_filter
+import os
+
+from tg_bot import LOGGER
+from tg_bot.modules.commands.handlers import register_handlers
 
 
-application = ApplicationBuilder().token(Config.API_KEY).build()
+# Load api_key from ENV (docker compose injects .env values to ENV when ran)
+API_KEY = os.getenv("API_KEY")
 
-# Handlers
+# Validate API_KEY
+if API_KEY is None or API_KEY == "":
+    LOGGER.error("No api key provided. Exiting...")
+    quit(1)
+
+# Create bot
+application = ApplicationBuilder().token(API_KEY).build()
+
+# Register commands
 register_handlers(application=application)
-if Config.USE_PROFANITY_FILTER:
-    register_profanity_filter(application=application)
 
-welcome_message_filter(application=application)
-
+# Run bot
 application.run_polling()

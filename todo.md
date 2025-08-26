@@ -1,5 +1,4 @@
 #### Done:
-* profanity filter
 * kick
 * ban
 * unban
@@ -10,9 +9,11 @@
 * rozbicie moderation action
 * fancy notatnik dla zasad
 * hello message
+* Nie można wybrać bota jako cel moderation action
 
 #### In work:
-* Nie można wybrać bota jako cel moderation action
+* languages
+* settings
 
 #### Ideas:
 * captcha system 
@@ -25,6 +26,9 @@
 * baza danych do zapisu warnów i wiadomości
 * reset api key
 
+
+#### Recover:
+* profanity filter
 
 #### Smth Smth
 After muting user, his previous permissions are lost
