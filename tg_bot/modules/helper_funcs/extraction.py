@@ -1,5 +1,7 @@
 from typing import Optional
 from functools import wraps
+import time
+import re
 
 from telegram import Update, User, Message, ChatMember
 from telegram.ext import ContextTypes
@@ -74,3 +76,36 @@ async def fetch_target_member(update: Update, context: ContextTypes.DEFAULT_TYPE
         return None
     
     return chat_id, target_user
+
+async def extract_time(message: Message, args: str):
+    if not args:
+        await message.reply_text(get_dialog("SPECIFY_TIME", message.chat.id))
+        return None, None
+    
+    matches = re.findall(r"(\d+)([mhd])", args)
+    if not matches:
+        await message.reply_text(get_dialog("INVALID_TIME", message.chat.id))
+        return None, None
+
+    total_seconds = 0
+    parts = []
+    for amount, unit in matches:
+        amount = int(amount)
+        if unit == "d":
+            total_seconds += amount * 24 * 60 * 60
+            parts.append(f"{amount} day{'s' if amount != 1 else ''}")
+        elif unit == "h":
+            total_seconds += amount * 60 * 60
+            parts.append(f"{amount} hour{'s' if amount != 1 else ''}")
+        elif unit == "m":
+            total_seconds += amount * 60
+            parts.append(f"{amount} minute{'s' if amount != 1 else ''}")
+
+    if total_seconds == 0:
+        await message.reply_text(get_dialog("TIME_GREATER_THAN_ZERO", message.chat.id))
+        return None, None
+
+    until_date = int(time.time() + total_seconds)
+    pretty = ", ".join(parts)
+
+    return until_date, pretty

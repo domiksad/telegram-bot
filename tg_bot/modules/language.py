@@ -17,5 +17,20 @@ LANG = {
         "CANT_RESTRICT_ADMINS": "Nie mogę ograniczać innych administratorów",
         "CANT_RESTRICT_MYSELF": "Nie mogę sam siebie ograniczyć",
         "WHY_UNBAN_USER_ALREADY_IN_CHAT": "Użytkownik jest już na czacie więc nie trzeba go odbanowywać",
+        "SPECIFY_TIME": "Musisz podać czas, np. 5m, 2h, 1d.",
+        "INVALID_TIME": "Nieprawidłowy format czasu. Użyj np.: 5m, 2h, 1d lub 2d3h15m.",
+        "TIME_GREATER_THAN_ZERO": "Czas musi być większy niż 0.",
+        "KICKED": "{user} został wyrzucony",
+        "BANNED": "{user} został zbanowany",
+        "UNBANNED": "{user} został odbanowany",
+        "MUTED": "{user} został wyciszony na {until_date}",
+        "UNMUTED": "{user} może już pisać",
+        "USER_ISNT_MUTED": "Użytkownik nie jest wyciszony",
+    },
+    "eng": {
+        "SPECIFY_TIME": "You need to specify a time, e.g. 5m, 2h, 1d.",
+        "INVALID_TIME": "Invalid time format. Use something like: 5m, 2h, 1d or 2d3h15m.",
+        "TIME_GREATER_THAN_ZERO": "Time must be greater than 0.",
+        "MUTED": "{user} has been muted for {until_date}",
     }
 }
