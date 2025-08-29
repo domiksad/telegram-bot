@@ -5,7 +5,7 @@ from telegram import Update, ChatMember, Chat, constants
 from telegram.ext import ContextTypes
 
 from tg_bot.modules.language import get_dialog
-
+from tg_bot.modules.helper_funcs.string_funcs import html_mention
 
 # Functions
 async def is_bot_admin(chat: Chat, bot_id: int, bot_member: Optional[ChatMember] = None) -> bool:
@@ -47,7 +47,8 @@ def bot_admin(func):
             return await func(update, context, *args, **kwargs)
         else:
             await update.effective_message.reply_text(get_dialog("BOT_IS_NOT_AN_ADMIN", chat_id=update.effective_chat.id))
-
+            return 
+        
     return is_admin
 
 def bot_can_restrict(func):
@@ -60,7 +61,8 @@ def bot_can_restrict(func):
             return await func(update, context, *args, **kwargs)
         else:
             await update.effective_message.reply_text(get_dialog("BOT_CANT_RESTRICT", chat_id=update.effective_chat.id))
-
+            return
+        
     return bot_restrict
 
 def user_admin(func):
@@ -73,7 +75,8 @@ def user_admin(func):
             return await func(update, context, *args, **kwargs)
         else:
             await update.effective_message.reply_text(get_dialog("USER_IS_NOT_AN_ADMIN", chat_id=update.effective_chat.id))
-
+            return 
+        
     return is_admin
 
 def user_can_restrict(func):
@@ -86,5 +89,6 @@ def user_can_restrict(func):
             return await func(update, context, *args, **kwargs)
         else:
             await update.effective_message.reply_text(get_dialog("USER_CANT_RESTRICT", chat_id=update.effective_chat.id))
-
+            return
+        
     return bot_restrict

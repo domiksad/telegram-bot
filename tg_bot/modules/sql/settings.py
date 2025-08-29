@@ -8,7 +8,7 @@ def ensure_settings(chat_id: int):
         con.commit()
         return
 
-def get_settings(chat_id: int) -> tuple:
+def get_settings(chat_id: int) -> dict:
     ensure_settings(chat_id=chat_id)
     cur.execute("SELECT * FROM channel_settings WHERE chat_id = ?", [chat_id])
     return cur.fetchone()

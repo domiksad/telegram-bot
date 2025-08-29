@@ -17,6 +17,8 @@ cur.execute("create table if not exists warnings(" \
 cur.execute("create table if not exists channel_settings(" \
             "`chat_id` BIGINT not null," \
             f"`language` text default '{Config.DEFAULT_LANGUAGE}'," \
+            "`max_warn_count` int default 3," \
+            "`soft_warn` bool default false," \
             "primary key(chat_id)" \
             ")")
 

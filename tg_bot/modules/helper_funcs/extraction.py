@@ -9,6 +9,7 @@ from telegram.ext import ContextTypes
 from tg_bot.modules.language import get_dialog
 from tg_bot.modules.sql.settings import get_chat_language
 from tg_bot.modules.helper_funcs.chat_status import bot_admin, user_can_restrict, is_user_admin, bot_can_restrict
+from tg_bot.modules.helper_funcs.string_funcs import escape_html
 from tg_bot import LOGGER
 
 def user_from_reply(effective_message: Message) -> Optional[User]:
@@ -51,8 +52,6 @@ async def extract_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             #     return None
             # if target_user_chat.type == "private": # Idk how it could not be private chat but better be sure
             #     return await context.bot.get_chat_member(chat_id=update.effective_chat.id, user_id=target_user_chat.id) # When chat.type is "private" then chat.id == user.id
-        
-
     return None
 
 async def fetch_target_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Optional[tuple[int, ChatMember]]:
@@ -80,12 +79,12 @@ async def fetch_target_member(update: Update, context: ContextTypes.DEFAULT_TYPE
 async def extract_time(message: Message, args: str):
     if not args:
         await message.reply_text(get_dialog("SPECIFY_TIME", message.chat.id))
-        return None, None
+        return None
     
     matches = re.findall(r"(\d+)([mhd])", args)
     if not matches:
         await message.reply_text(get_dialog("INVALID_TIME", message.chat.id))
-        return None, None
+        return None
 
     total_seconds = 0
     parts = []
@@ -103,9 +102,21 @@ async def extract_time(message: Message, args: str):
 
     if total_seconds == 0:
         await message.reply_text(get_dialog("TIME_GREATER_THAN_ZERO", message.chat.id))
-        return None, None
+        return None
 
     until_date = int(time.time() + total_seconds)
     pretty = ", ".join(parts)
 
     return until_date, pretty
+
+async def extract_reason(message: Message, args: str) -> str | None:
+    if not args:
+        return None
+    
+    # Delete time part
+    reason = re.sub(r"(\d+[mhd])", "", args).strip()
+
+    if not reason:
+        return None
+    
+    return escape_html(reason)

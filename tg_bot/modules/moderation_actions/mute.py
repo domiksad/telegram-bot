@@ -11,6 +11,7 @@ from tg_bot import LOGGER
 @bot_admin
 @bot_can_restrict
 @user_can_restrict
+
 async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None: # Ile czasu
     if update.effective_message is None or update.effective_chat is None:
         return
@@ -21,6 +22,10 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None: # Il
         return
     
     [chat_id, target_user] = result
+
+    if await is_in_chat(chat=update.effective_chat, user_id=target_user.user.id) is False:
+        await update.effective_message.reply_text(get_dialog("USER_NOT_IN_CHAT", chat_id=chat_id).format(user=html_mention(target_user.user)), parse_mode="HTML")
+        return
 
     time = await extract_time(update.effective_message, "".join(context.args[1:])) # type: ignore 
     
@@ -35,6 +40,7 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None: # Il
 @bot_admin
 @bot_can_restrict
 @user_can_restrict
+
 async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_message is None or update.effective_chat is None:
         return
@@ -46,9 +52,14 @@ async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     [chat_id, target_user] = result
 
-    if target_user.status != "restricted":
-        await update.effective_message.reply_text(get_dialog("USER_ISNT_MUTED", update.effective_chat.id))
+    if await is_in_chat(chat=update.effective_chat, user_id=target_user.user.id) is False:
+        await update.effective_message.reply_text(get_dialog("USER_NOT_IN_CHAT", chat_id=chat_id).format(user=html_mention(target_user.user)), parse_mode="HTML")
+        return
 
+    if target_user.status != "restricted":
+        await update.effective_message.reply_text(get_dialog("USER_ISNT_MUTED", update.effective_chat.id).format(user=html_mention(target_user.user)), parse_mode="HTML")
+        return 
+    
     chat = await context.bot.get_chat(update.effective_chat.id)
     if chat is None:
         LOGGER.error(f"Chat not found: {update.effective_chat.id}")
