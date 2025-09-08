@@ -8,7 +8,7 @@ from telegram.ext import ContextTypes
 
 from tg_bot.modules.language import get_dialog
 from tg_bot.modules.sql.settings import get_chat_language
-from tg_bot.modules.helper_funcs.chat_status import bot_admin, user_can_restrict, is_user_admin, bot_can_restrict
+from tg_bot.modules.helper_funcs.chat_status import bot_admin, user_can_restrict, is_user_admin, bot_can_restrict, is_in_chat
 from tg_bot.modules.helper_funcs.string_funcs import escape_html
 from tg_bot import LOGGER
 
@@ -54,7 +54,7 @@ async def extract_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             #     return await context.bot.get_chat_member(chat_id=update.effective_chat.id, user_id=target_user_chat.id) # When chat.type is "private" then chat.id == user.id
     return None
 
-async def fetch_target_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Optional[tuple[int, ChatMember]]:
+async def fetch_target_member(update: Update, context: ContextTypes.DEFAULT_TYPE, must_be_in_chat: bool = True) -> Optional[tuple[int, ChatMember]]:
     if update.effective_chat is None or update.effective_message is None:
         return None
     
@@ -74,18 +74,28 @@ async def fetch_target_member(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.effective_message.reply_text(text=get_dialog("CANT_RESTRICT_ADMINS", chat_id))
         return None
     
+    if must_be_in_chat is True and await is_in_chat(chat=update.effective_chat, user_id=target_user.user.id) is False:
+        await update.effective_message.reply_text(get_dialog("USER_NOT_IN_CHAT", chat_id=chat_id))
+        return None
+
     return chat_id, target_user
 
-async def extract_time(message: Message, args: str):
+
+async def extract_time_and_reason(message: Message, args: str):
     if not args:
         await message.reply_text(get_dialog("SPECIFY_TIME", message.chat.id))
         return None
-    
-    matches = re.findall(r"(\d+)([mhd])", args)
-    if not matches:
+
+    # Wyciągamy czas tylko z początku wiadomości
+    match = re.match(r"^((?:\d+[mhd]\s*)+)(.*)$", args.strip())
+    if not match:
         await message.reply_text(get_dialog("INVALID_TIME", message.chat.id))
         return None
 
+    time_str = match.group(1).strip()   # np. "2d 3h 15m"
+    reason = match.group(2).strip()     # reszta tekstu
+
+    matches = re.findall(r"(\d+)([mhd])", time_str)
     total_seconds = 0
     parts = []
     for amount, unit in matches:
@@ -107,7 +117,7 @@ async def extract_time(message: Message, args: str):
     until_date = int(time.time() + total_seconds)
     pretty = ", ".join(parts)
 
-    return until_date, pretty
+    return until_date, pretty, reason
 
 async def extract_reason(message: Message, args: str) -> str | None:
     if not args:

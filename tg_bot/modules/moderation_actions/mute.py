@@ -2,7 +2,7 @@ from telegram import Update, ChatPermissions
 from telegram.ext import ContextTypes
 
 from tg_bot.modules.helper_funcs.chat_status import bot_admin, user_can_restrict, bot_can_restrict, is_in_chat
-from tg_bot.modules.helper_funcs.extraction import fetch_target_member, extract_time
+from tg_bot.modules.helper_funcs.extraction import fetch_target_member, extract_time_and_reason
 from tg_bot.modules.helper_funcs.string_funcs import html_mention
 from tg_bot.modules.language import get_dialog
 from tg_bot import LOGGER
@@ -23,19 +23,15 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None: # Il
     
     [chat_id, target_user] = result
 
-    if await is_in_chat(chat=update.effective_chat, user_id=target_user.user.id) is False:
-        await update.effective_message.reply_text(get_dialog("USER_NOT_IN_CHAT", chat_id=chat_id).format(user=html_mention(target_user.user)), parse_mode="HTML")
-        return
-
-    time = await extract_time(update.effective_message, "".join(context.args[1:])) # type: ignore 
+    time_and_reason = await extract_time_and_reason(update.effective_message, " ".join(context.args[1:])) # type: ignore 
     
-    if time is None:
+    if time_and_reason is None:
         return
     
-    until_date, pretty = time
+    until_date, pretty, reason = time_and_reason
 
     await context.bot.restrict_chat_member(chat_id=chat_id, user_id=target_user.user.id, permissions=ChatPermissions.no_permissions(), until_date=until_date)
-    await update.effective_message.reply_text(get_dialog("MUTED", update.effective_chat.id).format(user=html_mention(target_user.user), until_date=pretty), parse_mode="HTML")
+    await update.effective_message.reply_text(get_dialog("MUTED", update.effective_chat.id).format(user=html_mention(target_user.user), until_date=pretty, reason=reason), parse_mode="HTML")
 
 @bot_admin
 @bot_can_restrict
@@ -51,10 +47,6 @@ async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     [chat_id, target_user] = result
-
-    if await is_in_chat(chat=update.effective_chat, user_id=target_user.user.id) is False:
-        await update.effective_message.reply_text(get_dialog("USER_NOT_IN_CHAT", chat_id=chat_id).format(user=html_mention(target_user.user)), parse_mode="HTML")
-        return
 
     if target_user.status != "restricted":
         await update.effective_message.reply_text(get_dialog("USER_ISNT_MUTED", update.effective_chat.id).format(user=html_mention(target_user.user)), parse_mode="HTML")
