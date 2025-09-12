@@ -11,7 +11,7 @@ API_KEY = os.getenv("API_KEY")
 
 # Validate API_KEY
 if API_KEY is None or API_KEY == "":
-    LOGGER.error("No api key provided. Exiting...")
+    LOGGER.critical("No api key provided. Exiting...")
     quit(1)
 
 # Create bot

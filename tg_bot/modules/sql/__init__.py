@@ -20,7 +20,7 @@ cur.execute("create table if not exists channel_settings(" \
             "`max_warn_count` int default 3," \
             "`soft_warn` bool default false," \
             "`change_settings_creator_only` bool default true," \
-            "`welcome_message` text default ''," \
+            "`welcome_message` text default '{\"type\": \"none\", \"content\": \"\"}'," \
             "primary key(chat_id)" \
             ")")
 

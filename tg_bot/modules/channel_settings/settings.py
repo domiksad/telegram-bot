@@ -1,3 +1,6 @@
+import json
+from datetime import timedelta, datetime, timezone
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, CallbackQuery, error
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
@@ -5,6 +8,7 @@ from tg_bot.modules.sql.settings import *
 from tg_bot.modules.helper_funcs.chat_status import bot_admin, user_admin
 from tg_bot.modules.helper_funcs.array_funcs import get_next_key, get_prev_key
 from tg_bot.modules.language import get_dialog, LANG
+from tg_bot.modules.misc_actions.welcome import TYPES_OF_MSG
 from tg_bot import LOGGER
 
 
@@ -12,6 +16,9 @@ TEXTS = ["❌ Off", "✅ On"] # False (0); True (1)
 
 def build_keyboard(chat_id: int, settings: dict) -> InlineKeyboardMarkup:
     LOGGER.info(f"BUILING KEYBOARD. Settings: {settings.items()}")
+    wm = json.loads(settings["welcome_message"])
+    LOGGER.info(wm["type"])
+    LOGGER.info(wm["type"] == "none" )
     keyboard = [ # callback can have max 64 chars
         [
             InlineKeyboardButton("⬅️", callback_data=f"lang_dec:{chat_id}"),
@@ -22,7 +29,22 @@ def build_keyboard(chat_id: int, settings: dict) -> InlineKeyboardMarkup:
             InlineKeyboardButton("Soft warn", callback_data=f"soft_warn_info:{chat_id}"),
             InlineKeyboardButton(f"{TEXTS[settings["soft_warn"]]}", callback_data=f"soft_warn_toogle:{chat_id}"),
         ],
+        [
+            InlineKeyboardButton("Welcome message", callback_data=f"dummy:{chat_id}"),
+        ],
+        [
+            InlineKeyboardButton("⬅️", callback_data=f"welcome_message_type_dec:{chat_id}"),
+            InlineKeyboardButton(f"Type: {wm["type"]}", callback_data=f"welcome_message_info:{chat_id}"),
+            InlineKeyboardButton("➡️", callback_data=f"welcome_message_type_inc:{chat_id}"),
+        ],
+        [
+            InlineKeyboardButton("Check content", callback_data=f"welcome_message_content_check:{chat_id}"),
+            InlineKeyboardButton("Set content", callback_data=f"welcome_message_content_set:{chat_id}"),
+        ] if wm["type"] != "none" else None, # if type == none than we dont have data to show 
     ]
+
+    keyboard = [row for row in keyboard if row is not None] # Delete all None rows 
+
     return InlineKeyboardMarkup(keyboard)
 
 @user_admin
@@ -67,7 +89,7 @@ async def get_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    if query is None or update.effective_message is None or update.effective_user is None:
+    if query is None or update.effective_message is None or update.effective_user is None or update.effective_chat is None or context.user_data is None:
         LOGGER.error("SMTH is null", exc_info=True)
         return 
 
@@ -97,6 +119,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     setting = None
     value = None
     match(action):
+        # changes
         case "lang_dec":
             setting = "language"
             value = get_prev_key(LANG, settings[setting])
@@ -108,6 +131,40 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         case "soft_warn_toogle":
             setting = "soft_warn"
             value = not settings[setting]
+        case "welcome_message_type_dec":
+            json_data = json.loads(settings["welcome_message"])
+            json_data["type"] = get_prev_key(TYPES_OF_MSG, json_data["type"])
+            setting = "welcome_message"
+            value = json.dumps(json_data)
+        case "welcome_message_type_inc":
+            json_data = json.loads(settings["welcome_message"])
+            json_data["type"] = get_next_key(TYPES_OF_MSG, json_data["type"])
+            setting = "welcome_message"
+            value = json.dumps(json_data)
+        case "welcome_message_content_check":
+            json_data = json.loads(settings["welcome_message"])
+            handler = TYPES_OF_MSG[json_data["type"]]
+            if handler:
+                await update.effective_chat.send_message("Currently set message/media")
+                await handler(update, context, json_data["content"] or "NULL")
+                return
+            else:
+                LOGGER.error(f"No handler specified: {json.dumps(json_data)}")
+                return
+        case "welcome_message_content_set":
+            json_data = json.loads(settings["welcome_message"])
+            if json_data["type"] == "none": # rebuild keyboard because wrong data is set
+                reply_markup = build_keyboard(chat_id=chat_id, settings=settings)
+                await query.edit_message_text(text=text, reply_markup=reply_markup)
+                return
+            
+            await update.effective_chat.send_message("Please send the new content for the welcome message")
+            context.user_data["awaiting_welcome_content"] = {"chat_id": chat_id, "type": json_data["type"], "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5)}
+            return
+        # infos
+        case "dummy":
+            await query.answer()
+            return
         case "soft_warn_info":
             await query.answer(get_dialog("SOFT_WARN_INFO", chat_id=chat_id), show_alert=True)
             return
@@ -124,3 +181,51 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = build_keyboard(chat_id=chat_id, settings=settings)
 
     await query.edit_message_text(text=text, reply_markup=reply_markup)
+
+# Fix json injection
+async def dm_handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    LOGGER.info("Working")
+    if update.effective_message is None or update.effective_user is None or update.effective_chat is None or context.user_data is None:
+        return
+    LOGGER.info("Working1")
+    if "awaiting_welcome_content" in context.user_data:
+        LOGGER.info("Working2")
+        data = context.user_data.pop("awaiting_welcome_content")
+        if data is None:
+            LOGGER.error("No data")
+            return
+        
+        if datetime.now(timezone.utc) > data["expires_at"]:
+            await update.effective_message.reply_text("Your input expired")
+            return
+        
+        chat_id = data["chat_id"]
+        msg_type = data["type"]
+        json_data = get_settings(chat_id=chat_id)["welcome_message"]
+        json_data = json.loads(json_data)
+        
+        if update.effective_message.text and msg_type == "text":
+            new_content = update.effective_message.text
+        elif update.effective_message.photo and msg_type == "img":
+            new_content = update.effective_message.photo[-1].file_id
+        elif update.effective_message.animation and msg_type == "gif":
+            new_content = update.effective_message.animation.file_id
+        elif update.effective_message.sticker and msg_type == "sticker":
+            new_content = update.effective_message.sticker.file_id
+        else:
+            await update.effective_message.reply_text(f"Unsupported message type for expected type '{msg_type}'")
+            return
+
+        json_data["type"] = msg_type
+        json_data["content"] = new_content
+
+        set_setting(chat_id=chat_id, setting="welcome_message", value=json.dumps(json_data))
+
+        handler = TYPES_OF_MSG[msg_type]
+        if handler:
+            await update.effective_message.reply_text("Welcome message updated! Will display:")
+            await handler(update, context, json_data["content"])
+        else:
+            LOGGER.error(f"No handler specified: {json.dumps(json_data)}")
+            return
+        return
