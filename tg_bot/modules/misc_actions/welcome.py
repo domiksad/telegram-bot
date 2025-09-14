@@ -38,7 +38,7 @@ TYPES_OF_MSG = {
 async def welcome_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat is None:
         return
-    LOGGER.info("Running")
+    
     settings = get_settings(update.effective_chat.id)
     welcome_message = settings["welcome_message"]
 

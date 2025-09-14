@@ -41,11 +41,21 @@ LANG = {
         "USAGE": "Użycie: {command} {args}",
         "SETTINGS_PANEL": "Panel ustawień dla {id}",
         "SOFT_WARN_INFO": "Gdy soft_warn jest off, po osiągnięciu maks. ostrzeżeń zostajesz zablokowany; gdy on, zostajesz wyrzucony",
+        "UNSUPPORTED_MESSAGE_TYPE": "Nieobsługiwany typ wiadomości dla oczekiwanego typu {msg_type}",
+        "WELCOME_MESSAGE_SET": "Wiadomość powitalna ustawiona. Będę wyświetlał:",
+        "INPUT_EXPIRED": "Czas na wprowadzenie danych minął",
+        "SEND_NEW_WELCOME_MESSAGE": "Wyślij nową treść wiadomości powitalnej",
+        "CURRENT_MEDIA": "Obecnie ustawiona wiadomość/media",
     },
     "eng": {
         "SPECIFY_TIME": "You need to specify a time, e.g. 5m, 2h, 1d.",
         "INVALID_TIME": "Invalid time format. Use something like: 5m, 2h, 1d or 2d3h15m.",
         "TIME_GREATER_THAN_ZERO": "Time must be greater than 0.",
         "MUTED": "{user} has been muted for {until_date}",
+        "UNSUPPORTED_MESSAGE_TYPE": "Unsupported message type for expected type '{msg_type}'",
+        "WELCOME_MESSAGE_SET": "Welcome message updated! Will display:",
+        "INPUT_EXPIRED": "Your input expired",
+        "SEND_NEW_WELCOME_MESSAGE": "Please send the new content for the welcome message",
+        "CURRENT_MEDIA": "Currently set message/media"
     }
 }
