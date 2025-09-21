@@ -2,8 +2,10 @@ import json
 from datetime import timedelta, datetime, timezone
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, CallbackQuery, error
+import telegram
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
+from tg_bot.modules.sql.groups_tracker import get_groups
 from tg_bot.modules.sql.settings import * 
 from tg_bot.modules.helper_funcs.chat_status import bot_admin, user_admin
 from tg_bot.modules.helper_funcs.array_funcs import get_next_key, get_prev_key
@@ -80,16 +82,27 @@ async def get_settings_panel(update: Update, context: ContextTypes.DEFAULT_TYPE)
     message = update.effective_message
     user = update.effective_user
 
-    if context.args is None or len(context.args) != 2 and update.effective_chat.type == "private":
-        await message.reply_text(get_dialog("CANT_USE_COMMAND_IN_DMS", chat_id=chat.id))
+    # DM chat
+    if update.effective_chat.type == "private": 
+        # Get all groups containing the user
+        groups = get_groups()
+        groups_with_user = []
+        for group_id in groups:
+            try:
+                group_member = await context.bot.get_chat_member(chat_id=group_id, user_id=user.id) # Rate limiter will kick in for sure
+                if group_member.status in ["creator","administrator"]:
+                    groups_with_user.append(group_id)
+            except error.Forbidden:
+                LOGGER.error(f"Forbidden: {group_id}")
+        
+        keyboard = []
+        for group_id in groups_with_user:
+            group = await context.bot.get_chat(group_id)
+            keyboard.append([
+                InlineKeyboardButton(group.title or str(group.id), callback_data=f"main:move:{group_id}")
+            ])
+            await update.effective_chat.send_message(text=get_dialog("SELECT_GROUP", lang="eng"), reply_markup=InlineKeyboardMarkup(keyboard))
         return
-
-    try:
-        chat_id = (await context.bot.get_chat(chat_id=int(context.args[0]))).id
-    except:
-        if update.effective_chat.type == "private":
-            await message.reply_text(get_dialog("CANT_USE_COMMAND_IN_DMS", chat_id=chat.id))
-            return
 
     chat_id = chat.id
     settings = get_settings(chat_id=chat.id)
@@ -200,6 +213,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         case ["dummy"]:
             await query.answer()
             return
+
+        case ["move"]:
+            text = get_dialog("SETTINGS_PANEL", lang=settings["language"]).format(id=chat_id)
 
     await query.answer()
     

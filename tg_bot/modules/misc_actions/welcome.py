@@ -1,9 +1,8 @@
 # type: ignore
-from typing import Callable
 import json
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, CallbackQuery, error
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram import Update
+from telegram.ext import ContextTypes
 
 from tg_bot.modules.sql.settings import * 
 from tg_bot.modules.helper_funcs.chat_status import bot_admin, user_admin

@@ -46,6 +46,7 @@ LANG = {
         "INPUT_EXPIRED": "Czas na wprowadzenie danych minął",
         "SEND_NEW_WELCOME_MESSAGE": "Wyślij nową treść wiadomości powitalnej",
         "CURRENT_MEDIA": "Obecnie ustawiona wiadomość/media",
+        "SELECT_GROUP": "Wybierz grupę do konfigurowania",
     },
     "eng": {
         "SPECIFY_TIME": "You need to specify a time, e.g. 5m, 2h, 1d.",
@@ -56,6 +57,7 @@ LANG = {
         "WELCOME_MESSAGE_SET": "Welcome message updated! Will display:",
         "INPUT_EXPIRED": "Your input expired",
         "SEND_NEW_WELCOME_MESSAGE": "Please send the new content for the welcome message",
-        "CURRENT_MEDIA": "Currently set message/media"
+        "SELECT_GROUP": "Select group to configure",
+        "CURRENT_MEDIA": "Currently set message/media",
     }
 }

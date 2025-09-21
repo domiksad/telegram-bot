@@ -13,4 +13,4 @@ LOGGER = logging.getLogger(__name__)
 # Check python version
 if sys.version_info < (3, 13):
     LOGGER.critical("You need at least Python 3.13 to run this project")
-    quit(-1);
+    quit(-1)

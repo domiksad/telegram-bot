@@ -24,4 +24,13 @@ cur.execute("create table if not exists channel_settings(" \
             "primary key(chat_id)" \
             ")")
 
+cur.execute("create table if not exists groups(" \
+            "`chat_id` BIGINT not null unique" \
+            ")")
+
 con.commit()
+
+# Optimization
+from tg_bot.modules.sql.groups_tracker import groups_tracked
+cur.execute("SELECT chat_id FROM groups")
+groups_tracked.update(row[0] for row in cur.fetchall())

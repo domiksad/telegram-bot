@@ -14,3 +14,8 @@ primary key (chat_id, user_id)
 if soft_warn is False than ban user after max_warn_count 
 if soft_warn is True than kick user after max_warn_count
 welcome_message format: {"type": "", "content": ""}
+
+### groups
+| chat_id |
+| :---: |
+| Int |
