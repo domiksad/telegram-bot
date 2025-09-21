@@ -74,7 +74,9 @@ source venv/bin/activate  # Linux / MacOS
 venv\Scripts\activate     # Windows
 
 pip install -r requirements.txt
-python -m tg_bot
+
+# Run the bot (use relative or absolute path to your .env file)
+python -m tg_bot --env <path_to_env>
 ```
 
 ## Database structure
