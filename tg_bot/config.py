@@ -1,5 +1,5 @@
 # Class for project configuration
 class Config:
-    DATABASE_NAME = "db/main.db"
+    DATABASE_NAME = "tg_bot/db/main.db"
     DEFAULT_LANGUAGE = "pl"
  

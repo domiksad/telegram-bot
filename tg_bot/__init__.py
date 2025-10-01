@@ -4,7 +4,7 @@ import sys
 # Setting logger
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.INFO,
 )
 
 # Set up logger for other files

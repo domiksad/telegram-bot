@@ -3,3 +3,5 @@ __pycache__
 main.db
 db/
 .vscode
+rm-pycache.bat
+config.py

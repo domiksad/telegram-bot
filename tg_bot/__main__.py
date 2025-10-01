@@ -6,7 +6,11 @@ from telegram.ext import ApplicationBuilder
 
 from tg_bot import LOGGER
 from tg_bot.modules.commands.handlers import register_handlers
-
+try:
+    from tg_bot import config
+except Exception as e:
+    LOGGER.error(f"Can't open config.py. Exiting...")
+    quit(1)
 
 # Load api_key from ENV (docker compose injects .env values to PATH/ENV when ran)
 API_KEY = os.getenv("API_KEY")
